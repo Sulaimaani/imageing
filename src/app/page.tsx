@@ -11,7 +11,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
-import { UploadCloud, Package, ListChecks, AlertCircle, Loader2, ScanSearch, ExternalLink, HeartPulse, ShieldAlert, Leaf } from 'lucide-react';
+import { UploadCloud, Package, ListChecks, AlertCircle, Loader2, ScanSearch, ExternalLink, HeartPulse, ShieldAlert, Leaf, ChefHat, Clock, TrendingUp } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import type { SuggestRecipesOutput } from '@/ai/flows/suggest-recipes'; // For type checking
+
+// Helper function to render paragraphs from text that might contain newlines
+const RenderParagraphs = ({ text, className }: { text: string, className?: string }) => {
+  if (!text) return null;
+  return text.split('\n').map((paragraph, index, arr) => (
+    <p key={index} className={`${className || ''} ${index < arr.length - 1 ? 'mb-2' : ''}`}>
+      {paragraph}
+    </p>
+  ));
+};
+
 
 export default function FoodLensPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -21,6 +34,7 @@ export default function FoodLensPage() {
   const [estimatedNutritionalInfo, setEstimatedNutritionalInfo] = useState<string | null>(null);
   const [potentialAllergens, setPotentialAllergens] = useState<string[] | null>(null);
   const [dietaryNotes, setDietaryNotes] = useState<string[] | null>(null);
+  const [recipes, setRecipes] = useState<SuggestRecipesOutput['recipes'] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -31,6 +45,7 @@ export default function FoodLensPage() {
     setEstimatedNutritionalInfo(null);
     setPotentialAllergens(null);
     setDietaryNotes(null);
+    setRecipes(null);
     setError(null);
   };
 
@@ -38,7 +53,7 @@ export default function FoodLensPage() {
     const file = event.target.files?.[0];
     if (file) {
       setImageFile(file);
-      setImagePreview(null); // Reset preview while new one loads
+      setImagePreview(null); 
       resetAnalysisResults();
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -46,7 +61,7 @@ export default function FoodLensPage() {
       };
       reader.onerror = () => {
         setError("Failed to read the image file.");
-        setImageFile(null); // If reading fails, treat as no valid file selected
+        setImageFile(null); 
         setImagePreview(null);
         toast({
           variant: "destructive",
@@ -58,7 +73,7 @@ export default function FoodLensPage() {
     } else {
       setImageFile(null);
       setImagePreview(null);
-      resetAnalysisResults(); // Also reset if file selection is cancelled or cleared
+      resetAnalysisResults(); 
     }
   };
 
@@ -93,6 +108,7 @@ export default function FoodLensPage() {
       setEstimatedNutritionalInfo(result.estimatedNutritionalInfo || null);
       setPotentialAllergens(result.potentialAllergens || []);
       setDietaryNotes(result.dietaryNotes || []);
+      setRecipes(result.recipes || []);
       toast({
         title: "Analysis Complete",
         description: "Product information extracted.",
@@ -101,10 +117,6 @@ export default function FoodLensPage() {
   };
   
   useEffect(() => {
-    // This effect ensures results are cleared if a new image is selected (or deselected)
-    // It runs when imageFile changes. If imageFile is set, results are cleared.
-    // If imageFile becomes null (e.g., user cancels selection or reader.onerror),
-    // resetAnalysisResults is also appropriate via the handleImageChange's else block.
     if (imageFile) {
       resetAnalysisResults();
     }
@@ -174,7 +186,7 @@ export default function FoodLensPage() {
         </Alert>
       )}
 
-      {(productName || ingredients || estimatedNutritionalInfo || potentialAllergens?.length || dietaryNotes?.length) && !error && (
+      {(productName || ingredients || estimatedNutritionalInfo || potentialAllergens?.length || dietaryNotes?.length || recipes?.length) && !error && (
         <Card className="mt-8 w-full max-w-2xl shadow-xl">
           <CardHeader>
             <CardTitle className="font-headline text-2xl">Analysis Results</CardTitle>
@@ -220,7 +232,7 @@ export default function FoodLensPage() {
                 </ul>
               </div>
             )}
-             {ingredients && ingredients.length === 0 && (
+             {ingredients && ingredients.length === 0 && productName !== null && ( // Show if analysis happened but no ingredients found
                 <div>
                   <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
                     <ListChecks className="mr-2 h-5 w-5 text-primary" /> Ingredients
@@ -252,7 +264,7 @@ export default function FoodLensPage() {
                  <p className="text-xs text-muted-foreground mt-1">Note: This is an AI-generated list. If you have allergies, carefully check the product packaging.</p>
               </div>
             )}
-             {potentialAllergens && potentialAllergens.length === 0 && ( 
+             {potentialAllergens && potentialAllergens.length === 0 && productName !== null && ( 
                 <div>
                   <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
                     <ShieldAlert className="mr-2 h-5 w-5 text-primary" /> AI-Identified Potential Allergens
@@ -275,14 +287,70 @@ export default function FoodLensPage() {
                 <p className="text-xs text-muted-foreground mt-1">Note: These are AI-generated suggestions based on ingredients. Consult official dietary guidelines or a professional for specific advice.</p>
               </div>
             )}
-             {dietaryNotes && dietaryNotes.length === 0 && (  
+             {dietaryNotes && dietaryNotes.length === 0 && productName !== null && (  
                 <div>
                   <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
                     <Leaf className="mr-2 h-5 w-5 text-primary" /> AI-Suggested Dietary Notes
                   </h3>
-                  <p className="text-muted-foreground p-3 bg-green-100 dark:bg-green-900/30 rounded-md">No specific dietary notes were generated by AI for this product.</p>
+                  <p className="text-muted-foreground p-3 bg-green-100 dark:bg-green-900/30 rounded-md border border-green-500/30">No specific dietary notes were generated by AI for this product.</p>
                 </div>
             )}
+
+            {recipes && recipes.length > 0 && (
+              <div>
+                <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
+                  <ChefHat className="mr-2 h-5 w-5 text-primary" /> AI-Suggested Recipes
+                </h3>
+                <Accordion type="single" collapsible className="w-full">
+                  {recipes.map((recipe, index) => (
+                    <AccordionItem value={`recipe-${index}`} key={index} className="bg-card border border-border/70 rounded-lg mb-3 shadow-sm">
+                      <AccordionTrigger className="p-4 hover:no-underline text-left">
+                        <div className="flex-1">
+                            <p className="font-semibold text-primary-foreground bg-primary/90 px-3 py-1.5 rounded-md inline-block mb-1 shadow">
+                                {recipe.recipeName}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">{recipe.description}</p>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="p-4 pt-0 space-y-3">
+                        {recipe.estimatedPrepTime && (
+                           <div className="text-sm text-muted-foreground flex items-center">
+                            <Clock className="mr-1.5 h-4 w-4" /> Prep time: {recipe.estimatedPrepTime}
+                           </div>
+                        )}
+                        {recipe.difficulty && (
+                            <div className="text-sm text-muted-foreground flex items-center">
+                                <TrendingUp className="mr-1.5 h-4 w-4" /> Difficulty: {recipe.difficulty}
+                            </div>
+                        )}
+                        <div>
+                            <h4 className="font-semibold mb-1 text-foreground/90">Ingredients:</h4>
+                            <ul className="list-disc list-inside space-y-0.5 text-sm text-foreground/80 pl-2">
+                                {recipe.ingredientsList.map((ing, i) => <li key={i}>{ing}</li>)}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-1 text-foreground/90">Instructions:</h4>
+                            <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap pl-2">
+                                <RenderParagraphs text={recipe.instructions} />
+                            </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+                 <p className="text-xs text-muted-foreground mt-2">Note: Recipes are AI-generated. Adjust to your preferences and check for ingredient availability.</p>
+              </div>
+            )}
+            {recipes && recipes.length === 0 && productName !== null && (
+                <div>
+                  <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
+                    <ChefHat className="mr-2 h-5 w-5 text-primary" /> AI-Suggested Recipes
+                  </h3>
+                  <p className="text-muted-foreground p-3 bg-muted/50 rounded-md">No specific recipes were suggested by AI for this product at this time.</p>
+                </div>
+            )}
+
 
           </CardContent>
           <CardFooter>
@@ -296,4 +364,3 @@ export default function FoodLensPage() {
     </div>
   );
 }
-

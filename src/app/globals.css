@@ -17,7 +17,7 @@ body {
     --popover: 216 100% 98%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 216 100% 73%; /* Light Blue - #74A5FF */
+    --primary: 36 99% 51%; /* Orange - #fe9c08 */
     --primary-foreground: 210 40% 98%; /* Almost white for text on primary */
 
     --secondary: 216 80% 90%;
@@ -34,7 +34,7 @@ body {
 
     --border: 216 50% 88%;
     --input: 216 50% 90%;
-    --ring: 216 100% 73%; /* Ring color, often same as primary */
+    --ring: 36 99% 51%; /* Ring color, matches new primary */
     
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -63,8 +63,8 @@ body {
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 216 100% 73%; /* Light Blue - #74A5FF */
-    --primary-foreground: 222 47% 11%; /* Dark text for light primary on dark bg */
+    --primary: 36 99% 51%; /* Orange - #fe9c08 */
+    --primary-foreground: 210 40% 98%; /* Almost white for text on orange in dark mode */
 
     --secondary: 217 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -80,7 +80,7 @@ body {
 
     --border: 217 32.6% 17.5%;
     --input: 217 32.6% 17.5%;
-    --ring: 216 100% 73%;
+    --ring: 36 99% 51%; /* Ring color, matches new primary */
     
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;

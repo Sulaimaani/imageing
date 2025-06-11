@@ -4,6 +4,7 @@
 import { extractProductName, ExtractProductNameInput } from '@/ai/flows/extract-product-name';
 import { identifyIngredients, IdentifyIngredientsInput } from '@/ai/flows/identify-ingredients';
 import { getExtendedProductInfo, GetExtendedProductInfoInput, GetExtendedProductInfoOutput } from '@/ai/flows/get-extended-product-info';
+import { suggestRecipes, SuggestRecipesInput, SuggestRecipesOutput } from '@/ai/flows/suggest-recipes';
 
 interface AnalysisResult {
   productName?: string;
@@ -11,6 +12,7 @@ interface AnalysisResult {
   estimatedNutritionalInfo?: string;
   potentialAllergens?: string[];
   dietaryNotes?: string[];
+  recipes?: SuggestRecipesOutput['recipes'];
   error?: string;
 }
 
@@ -29,20 +31,32 @@ export async function analyzeImageAction(photoDataUri: string): Promise<Analysis
       identifyIngredients(ingredientsInput),
     ]);
 
-    // Always attempt to get extended product information if the initial calls succeed.
-    // The getExtendedProductInfo flow is designed to handle empty productName or ingredients.
+    const currentProductName = productNameResult.productName || '';
+    const currentIngredients = ingredientsResult.ingredients || [];
+
+    // Perform subsequent calls that depend on product name/ingredients
     const extendedInfoInput: GetExtendedProductInfoInput = {
-      productName: productNameResult.productName, // Can be an empty string
-      ingredients: ingredientsResult.ingredients,   // Can be an empty array
+      productName: currentProductName,
+      ingredients: currentIngredients,
     };
-    const extendedInfo = await getExtendedProductInfo(extendedInfoInput);
+    const recipeSuggestionsInput: SuggestRecipesInput = {
+      productName: currentProductName,
+      ingredients: currentIngredients,
+    };
+    
+    const [extendedInfo, recipeSuggestions] = await Promise.all([
+        getExtendedProductInfo(extendedInfoInput),
+        suggestRecipes(recipeSuggestionsInput)
+    ]);
+
 
     return {
-      productName: productNameResult.productName,
-      ingredients: ingredientsResult.ingredients,
+      productName: currentProductName,
+      ingredients: currentIngredients,
       estimatedNutritionalInfo: extendedInfo?.estimatedNutritionalInfo,
       potentialAllergens: extendedInfo?.potentialAllergens,
       dietaryNotes: extendedInfo?.dietaryNotes,
+      recipes: recipeSuggestions?.recipes,
     };
   } catch (e) {
     console.error('Error during image analysis:', e);
@@ -53,4 +67,3 @@ export async function analyzeImageAction(photoDataUri: string): Promise<Analysis
     return { error: errorMessage };
   }
 }
-
