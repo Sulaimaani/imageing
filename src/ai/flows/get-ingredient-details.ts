@@ -18,7 +18,7 @@ export type GetIngredientDetailsInput = z.infer<typeof GetIngredientDetailsInput
 const GetIngredientDetailsOutputSchema = z.object({
   description: z.string().describe('A concise description of what the ingredient is.'),
   usageOrPreparation: z.string().describe("Information on how the ingredient is commonly used or prepared. If it's a processed ingredient that can be made at home (e.g., a sauce), provide a simple method. If it's a raw ingredient (e.g., flour, sugar), describe its common uses."),
-  youtubeVideoUrl: z.string().url().optional().describe('An optional, full embeddable YouTube video URL (e.g., https://www.youtube.com/embed/VIDEO_ID) showing how to make or use the ingredient. If no suitable video is found, this field should be omitted from the JSON output.'),
+  youtubeVideoUrl: z.string().optional().describe('An optional, full embeddable YouTube video URL (e.g., https://www.youtube.com/embed/VIDEO_ID) showing how to make or use the ingredient. If no suitable video is found, this field should be omitted from the JSON output.'),
 });
 export type GetIngredientDetailsOutput = z.infer<typeof GetIngredientDetailsOutputSchema>;
 
