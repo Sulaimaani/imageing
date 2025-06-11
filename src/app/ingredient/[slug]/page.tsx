@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronLeft, Info, Youtube, AlertTriangle } from 'lucide-react';
@@ -64,7 +65,15 @@ export default async function IngredientPage({ params }: IngredientPageProps) {
     ingredientDetails = await getIngredientDetails({ ingredientName });
   } catch (error) {
     console.error(`Failed to fetch ingredient details for "${ingredientName}":`, error);
-    fetchError = error instanceof Error ? error.message : "An unknown error occurred while fetching ingredient details. Please try again later.";
+    if (error instanceof Error) {
+        if (error.message.includes('429')) {
+            fetchError = "We're experiencing high demand for this ingredient! Please try again in a few moments.";
+        } else {
+            fetchError = `An error occurred while fetching details: ${error.message.substring(0, 150)}${error.message.length > 150 ? '...' : ''}. Please try again later.`;
+        }
+    } else {
+        fetchError = "An unknown error occurred while fetching ingredient details. Please try again later.";
+    }
   }
 
   return (
@@ -135,7 +144,7 @@ export default async function IngredientPage({ params }: IngredientPageProps) {
                 </section>
               )}
               
-              {!ingredientDetails.youtubeVideoUrl && (
+              {!ingredientDetails.youtubeVideoUrl && !fetchError && (
                  <div className="p-4 bg-muted/70 border rounded-lg mt-2 text-center shadow-sm">
                     <p className="text-muted-foreground italic">No video is currently available for this ingredient.</p>
                  </div>
