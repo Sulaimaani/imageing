@@ -38,26 +38,38 @@ export default function FoodLensPage() {
     const file = event.target.files?.[0];
     if (file) {
       setImageFile(file);
+      setImagePreview(null); // Reset preview while new one loads
       resetAnalysisResults();
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
       };
+      reader.onerror = () => {
+        setError("Failed to read the image file.");
+        setImageFile(null); // If reading fails, treat as no valid file selected
+        setImagePreview(null);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not read the selected image file.",
+        });
+      };
       reader.readAsDataURL(file);
     } else {
       setImageFile(null);
       setImagePreview(null);
+      resetAnalysisResults(); // Also reset if file selection is cancelled or cleared
     }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!imageFile || !imagePreview) {
-      setError('Please select an image first.');
+      setError('Please select a readable image first.');
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please select an image first.",
+        description: "Please select a readable image first. If you selected one, it might not have loaded correctly.",
       });
       return;
     }
@@ -89,6 +101,10 @@ export default function FoodLensPage() {
   };
   
   useEffect(() => {
+    // This effect ensures results are cleared if a new image is selected (or deselected)
+    // It runs when imageFile changes. If imageFile is set, results are cleared.
+    // If imageFile becomes null (e.g., user cancels selection or reader.onerror),
+    // resetAnalysisResults is also appropriate via the handleImageChange's else block.
     if (imageFile) {
       resetAnalysisResults();
     }
@@ -236,7 +252,7 @@ export default function FoodLensPage() {
                  <p className="text-xs text-muted-foreground mt-1">Note: This is an AI-generated list. If you have allergies, carefully check the product packaging.</p>
               </div>
             )}
-             {potentialAllergens && potentialAllergens.length === 0 && ( // This case might not be hit if extendedInfo always returns a string for empty.
+             {potentialAllergens && potentialAllergens.length === 0 && ( 
                 <div>
                   <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
                     <ShieldAlert className="mr-2 h-5 w-5 text-primary" /> AI-Identified Potential Allergens
@@ -259,7 +275,7 @@ export default function FoodLensPage() {
                 <p className="text-xs text-muted-foreground mt-1">Note: These are AI-generated suggestions based on ingredients. Consult official dietary guidelines or a professional for specific advice.</p>
               </div>
             )}
-             {dietaryNotes && dietaryNotes.length === 0 && (  // This case might not be hit if extendedInfo always returns a string for empty.
+             {dietaryNotes && dietaryNotes.length === 0 && (  
                 <div>
                   <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
                     <Leaf className="mr-2 h-5 w-5 text-primary" /> AI-Suggested Dietary Notes
