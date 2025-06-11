@@ -246,7 +246,7 @@ export default function FoodLensPage() {
                 </h3>
                 <ul className="space-y-1 list-disc list-inside bg-destructive/10 p-3 rounded-md text-destructive-foreground border border-destructive/30">
                   {potentialAllergens.map((allergen, index) => (
-                    <li key={index} className="text-sm">{allergen}</li>
+                    <li key={index} className="text-sm text-destructive">{allergen}</li>
                   ))}
                 </ul>
                  <p className="text-xs text-muted-foreground mt-1">Note: This is an AI-generated list. If you have allergies, carefully check the product packaging.</p>
@@ -257,7 +257,7 @@ export default function FoodLensPage() {
                   <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
                     <ShieldAlert className="mr-2 h-5 w-5 text-primary" /> AI-Identified Potential Allergens
                   </h3>
-                  <p className="text-muted-foreground p-3 bg-destructive/10 rounded-md">No common allergens were immediately apparent from the AI analysis of the ingredient list.</p>
+                  <p className="text-destructive p-3 bg-destructive/10 rounded-md border border-destructive/30">No common allergens were immediately apparent from the AI analysis of the ingredient list.</p>
                 </div>
             )}
 
