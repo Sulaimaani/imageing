@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
@@ -10,24 +11,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
-import { UploadCloud, Package, ListChecks, AlertCircle, Loader2, ScanSearch, ExternalLink } from 'lucide-react';
+import { UploadCloud, Package, ListChecks, AlertCircle, Loader2, ScanSearch, ExternalLink, HeartPulse, ShieldAlert, Leaf } from 'lucide-react';
 
 export default function FoodLensPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [productName, setProductName] = useState<string | null>(null);
   const [ingredients, setIngredients] = useState<string[] | null>(null);
+  const [estimatedNutritionalInfo, setEstimatedNutritionalInfo] = useState<string | null>(null);
+  const [potentialAllergens, setPotentialAllergens] = useState<string[] | null>(null);
+  const [dietaryNotes, setDietaryNotes] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const resetAnalysisResults = () => {
+    setProductName(null);
+    setIngredients(null);
+    setEstimatedNutritionalInfo(null);
+    setPotentialAllergens(null);
+    setDietaryNotes(null);
+    setError(null);
+  };
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setImageFile(file);
-      setProductName(null);
-      setIngredients(null);
-      setError(null);
+      resetAnalysisResults();
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -52,9 +63,7 @@ export default function FoodLensPage() {
     }
 
     setIsLoading(true);
-    setError(null);
-    setProductName(null);
-    setIngredients(null);
+    resetAnalysisResults();
 
     const result = await analyzeImageAction(imagePreview);
 
@@ -69,19 +78,19 @@ export default function FoodLensPage() {
     } else {
       setProductName(result.productName || 'Not found');
       setIngredients(result.ingredients || []);
+      setEstimatedNutritionalInfo(result.estimatedNutritionalInfo || null);
+      setPotentialAllergens(result.potentialAllergens || []);
+      setDietaryNotes(result.dietaryNotes || []);
       toast({
         title: "Analysis Complete",
-        description: "Product name and ingredients extracted.",
+        description: "Product information extracted.",
       });
     }
   };
   
-  // Effect to clear results when a new image is selected but not yet submitted
   useEffect(() => {
     if (imageFile) {
-      setProductName(null);
-      setIngredients(null);
-      setError(null);
+      resetAnalysisResults();
     }
   }, [imageFile]);
 
@@ -149,7 +158,7 @@ export default function FoodLensPage() {
         </Alert>
       )}
 
-      {(productName || ingredients) && !error && (
+      {(productName || ingredients || estimatedNutritionalInfo || potentialAllergens?.length || dietaryNotes?.length) && !error && (
         <Card className="mt-8 w-full max-w-2xl shadow-xl">
           <CardHeader>
             <CardTitle className="font-headline text-2xl">Analysis Results</CardTitle>
@@ -186,12 +195,58 @@ export default function FoodLensPage() {
                 </ul>
               </div>
             )}
-             {ingredients && ingredients.length === 0 && (
-                <p className="text-muted-foreground">No ingredients identified.</p>
+             {ingredients && ingredients.length === 0 && productName && (
+                <p className="text-muted-foreground">No ingredients identified for this product.</p>
             )}
+
+            {estimatedNutritionalInfo && (
+              <div>
+                <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
+                  <HeartPulse className="mr-2 h-5 w-5 text-primary" /> AI-Estimated Nutritional Info
+                </h3>
+                <p className="text-sm p-3 bg-muted/50 rounded-md text-foreground/80 whitespace-pre-wrap">{estimatedNutritionalInfo}</p>
+                <p className="text-xs text-muted-foreground mt-1">Note: This is an AI-generated estimate. Always refer to the product packaging for accurate nutritional information.</p>
+              </div>
+            )}
+
+            {potentialAllergens && potentialAllergens.length > 0 && (
+              <div>
+                <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
+                  <ShieldAlert className="mr-2 h-5 w-5 text-primary" /> AI-Identified Potential Allergens
+                </h3>
+                <ul className="space-y-1 list-disc list-inside bg-destructive/10 p-3 rounded-md text-destructive-foreground border border-destructive/30">
+                  {potentialAllergens.map((allergen, index) => (
+                    <li key={index} className="text-sm">{allergen}</li>
+                  ))}
+                </ul>
+                 <p className="text-xs text-muted-foreground mt-1">Note: This is an AI-generated list. If you have allergies, carefully check the product packaging.</p>
+              </div>
+            )}
+             {potentialAllergens && potentialAllergens.length === 0 && productName && (
+                <p className="text-muted-foreground">No common allergens immediately apparent from the AI analysis of the ingredient list.</p>
+            )}
+
+
+            {dietaryNotes && dietaryNotes.length > 0 && (
+              <div>
+                <h3 className="text-xl font-headline font-semibold flex items-center mb-2">
+                  <Leaf className="mr-2 h-5 w-5 text-primary" /> AI-Suggested Dietary Notes
+                </h3>
+                <ul className="space-y-1 list-disc list-inside bg-green-100 dark:bg-green-900/30 p-3 rounded-md text-green-700 dark:text-green-300 border border-green-500/30">
+                  {dietaryNotes.map((note, index) => (
+                    <li key={index} className="text-sm">{note}</li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground mt-1">Note: These are AI-generated suggestions based on ingredients. Consult official dietary guidelines or a professional for specific advice.</p>
+              </div>
+            )}
+             {dietaryNotes && dietaryNotes.length === 0 && productName && (
+                <p className="text-muted-foreground">No specific dietary notes generated by AI for this product.</p>
+            )}
+
           </CardContent>
           <CardFooter>
-             <p className="text-xs text-muted-foreground">Ingredient links lead to placeholder pages.</p>
+             <p className="text-xs text-muted-foreground">AI-generated information is for general guidance and may not always be accurate. Always verify critical information from the product packaging or official sources.</p>
           </CardFooter>
         </Card>
       )}
