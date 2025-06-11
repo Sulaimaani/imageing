@@ -29,15 +29,13 @@ export async function analyzeImageAction(photoDataUri: string): Promise<Analysis
       identifyIngredients(ingredientsInput),
     ]);
 
-    let extendedInfo: GetExtendedProductInfoOutput | null = null;
-    if (productNameResult.productName && ingredientsResult.ingredients) {
-      const extendedInfoInput: GetExtendedProductInfoInput = {
-        productName: productNameResult.productName,
-        ingredients: ingredientsResult.ingredients,
-      };
-      extendedInfo = await getExtendedProductInfo(extendedInfoInput);
-    }
-
+    // Always attempt to get extended product information if the initial calls succeed.
+    // The getExtendedProductInfo flow is designed to handle empty productName or ingredients.
+    const extendedInfoInput: GetExtendedProductInfoInput = {
+      productName: productNameResult.productName, // Can be an empty string
+      ingredients: ingredientsResult.ingredients,   // Can be an empty array
+    };
+    const extendedInfo = await getExtendedProductInfo(extendedInfoInput);
 
     return {
       productName: productNameResult.productName,
@@ -55,3 +53,4 @@ export async function analyzeImageAction(photoDataUri: string): Promise<Analysis
     return { error: errorMessage };
   }
 }
+
